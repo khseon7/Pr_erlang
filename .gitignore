@@ -6,6 +6,7 @@
 *.o
 *.beam
 *.plt
+baekJoon/*.beam
 erl_crash.dump
 .concrete/DEV_MODE
 
