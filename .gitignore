@@ -20,6 +20,7 @@ deps
 .rebar3
 _build/
 _checkouts/
+rebar3
 
 ### Erlang Patch ###
 rebar3.crashdump

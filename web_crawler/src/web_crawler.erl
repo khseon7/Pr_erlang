@@ -4,15 +4,17 @@
 % HTTP 클라이언트를 사용하여 페이지를 가져옵니다.
 fetch_url(URL) ->
     %% Ensure inets is started before making HTTP requests
+    io:format("Hello"),
     ok = application:ensure_all_started(inets),
+    io:format("Hello"),
     %% Send HTTP GET request
-    case httpc:request(get, {URL, []}, [], []) of
+    io:format("Hello ~p~n",[httpc:request(get, {URL, [], []}, [], [])]),
+    case httpc:request(get, {URL, [], []}, [], []) of
         {ok, {{Version, StatusCode, ReasonPhrase}, Headers, Body}} ->
+            %% Log the entire response for debugging
+            io:format("Response: ~p~n", [{Version, StatusCode, ReasonPhrase, Headers, Body}]),
             case StatusCode of
-                200 -> 
-                    %% Log the entire response for debugging
-                    io:format("Response: ~p~n", [{Version, StatusCode, ReasonPhrase, Headers, Body}]),
-                    Body;
+                200 -> Body;
                 _ ->
                     %% Handle non-200 responses
                     io:format("Error: HTTP Status Code ~p, Reason: ~s~n", [StatusCode, ReasonPhrase]),
