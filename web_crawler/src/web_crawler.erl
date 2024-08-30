@@ -7,11 +7,6 @@ fetch_url(URL) ->
     case application:ensure_all_started(inets) of
         {ok, _} -> 
             io:format("inets started successfully~n"),
-            %% Check if the URL starts with 'http://' or 'https://'
-            % io:format("Check start"),
-            % io:format("~p~n",[string:find(URL,"http://")]),
-            % io:format("~p ~p ~n",[string:prefix(URL,"http://"),string:prefix(URL,"https://")]),
-            % io:format("Check end"),
             case string:find(URL,"http://") of
                 URL->
                     %% Set up HTTP headers, including User-Agent
@@ -77,5 +72,6 @@ crawl(_, _) ->
 
 % 크롤러 시작
 start(URL) ->
+    ssl:start(), % ssl 앱 실행
     Depth = 2, % 크롤링 깊이 설정
     spawn(fun() -> crawl(URL, Depth) end).
