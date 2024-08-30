@@ -7,27 +7,41 @@ fetch_url(URL) ->
     case application:ensure_all_started(inets) of
         {ok, _} -> 
             io:format("inets started successfully~n"),
-            %% Send HTTP GET request
-            case httpc:request(get, {URL, [], []}, [], []) of
-                {ok, {{Version, StatusCode, ReasonPhrase}, Headers, Body}} ->
-                    %% Log the entire response for debugging
-                    io:format("Response: ~p~n", [{Version, StatusCode, ReasonPhrase, Headers, Body}]),
-                    case StatusCode of
-                        200 -> Body;
-                        _ ->
-                            %% Handle non-200 responses
-                            io:format("Error: HTTP Status Code ~p, Reason: ~s~n", [StatusCode, ReasonPhrase]),
+            %% Check if the URL starts with 'http://' or 'https://'
+            % io:format("Check start"),
+            % io:format("~p~n",[string:find(URL,"http://")]),
+            % io:format("~p ~p ~n",[string:prefix(URL,"http://"),string:prefix(URL,"https://")]),
+            % io:format("Check end"),
+            case string:find(URL,"http://") of
+                URL->
+                    %% Set up HTTP headers, including User-Agent
+                    Headers = [{"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"}],
+                    %% Send HTTP GET request
+                    case httpc:request(get, {URL, Headers}, [], []) of
+                        {ok, {{Version, StatusCode, ReasonPhrase}, Headers, Body}} ->
+                            %% Log the entire response for debugging
+                            io:format("Response: ~p~n", [{Version, StatusCode, ReasonPhrase, Headers, Body}]),
+                            case StatusCode of
+                                200 -> Body;
+                                _ ->
+                                    %% Handle non-200 responses
+                                    io:format("Error: HTTP Status Code ~p, Reason: ~s~n", [StatusCode, ReasonPhrase]),
+                                    <<>> %% Return empty body on error
+                            end;
+                        {error, HttpReason} ->
+                            %% Handle errors in the HTTP request itself
+                            io:format("HTTP Request Error: ~p~n", [HttpReason]),
                             <<>> %% Return empty body on error
                     end;
-                {error, HttpReason} ->
-                    %% Handle errors in the HTTP request itself
-                    io:format("HTTP Request Error: ~p~n", [HttpReason]),
-                    <<>> %% Return empty body on error
+                nomatch ->
+                    io:format("Invalid URL format. URL must start with 'http://' or 'https://'.~n"),
+                    <<>>
             end;
         {error, StartReason} -> 
             io:format("Failed to start inets: ~p~n", [StartReason]),
             exit(StartReason)
     end.
+
 
 % 페이지의 링크를 추출합니다.
 extract_links(Body) ->
