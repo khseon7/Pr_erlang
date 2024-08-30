@@ -1,14 +1,11 @@
 -module(web_crawler).
--export([start/1, crawl/2]).
+-export([start/1, crawl/2,fetch_url/1,extract_links/1]).
 
 % HTTP 클라이언트를 사용하여 페이지를 가져옵니다.
 fetch_url(URL) ->
     %% Ensure inets is started before making HTTP requests
-    io:format("Hello"),
     ok = application:ensure_all_started(inets),
-    io:format("Hello"),
     %% Send HTTP GET request
-    io:format("Hello ~p~n",[httpc:request(get, {URL, [], []}, [], [])]),
     case httpc:request(get, {URL, [], []}, [], []) of
         {ok, {{Version, StatusCode, ReasonPhrase}, Headers, Body}} ->
             %% Log the entire response for debugging
@@ -30,11 +27,16 @@ fetch_url(URL) ->
 extract_links(Body) ->
     %% HTML 파싱을 위한 라이브러리 사용 (예: floki)
     %% 여기는 간단한 정규식으로 처리 (추천하지 않음, 라이브러리 사용 권장)
-    {ok, Re} = re:compile("<a[^>]+href=[\"']?([^\"'>]+)[\"']?"),
-    %% 정규식을 이용해 링크 추출
-    case re:run(Body, Re, [{capture, all, list}]) of
-        {match, Links} -> Links;
-        nomatch -> []
+    case re:compile("<a[^>]+href=[\"']?([^\"'>]+)[\"']?") of
+        {ok, Re} ->
+            %% 정규식을 이용해 링크 추출
+            case re:run(Body, Re, [{capture, all, list}]) of
+                {match, Links} -> Links;
+                nomatch -> []
+            end;
+        {error, Reason} ->
+            io:format("Error compiling regex: ~p~n", [Reason]),
+            []
     end.
 
 % 링크를 기반으로 크롤링
