@@ -4,23 +4,29 @@
 % HTTP 클라이언트를 사용하여 페이지를 가져옵니다.
 fetch_url(URL) ->
     %% Ensure inets is started before making HTTP requests
-    ok = application:ensure_all_started(inets),
-    %% Send HTTP GET request
-    case httpc:request(get, {URL, [], []}, [], []) of
-        {ok, {{Version, StatusCode, ReasonPhrase}, Headers, Body}} ->
-            %% Log the entire response for debugging
-            io:format("Response: ~p~n", [{Version, StatusCode, ReasonPhrase, Headers, Body}]),
-            case StatusCode of
-                200 -> Body;
-                _ ->
-                    %% Handle non-200 responses
-                    io:format("Error: HTTP Status Code ~p, Reason: ~s~n", [StatusCode, ReasonPhrase]),
+    case application:ensure_all_started(inets) of
+        {ok, _} -> 
+            io:format("inets started successfully~n"),
+            %% Send HTTP GET request
+            case httpc:request(get, {URL, [], []}, [], []) of
+                {ok, {{Version, StatusCode, ReasonPhrase}, Headers, Body}} ->
+                    %% Log the entire response for debugging
+                    io:format("Response: ~p~n", [{Version, StatusCode, ReasonPhrase, Headers, Body}]),
+                    case StatusCode of
+                        200 -> Body;
+                        _ ->
+                            %% Handle non-200 responses
+                            io:format("Error: HTTP Status Code ~p, Reason: ~s~n", [StatusCode, ReasonPhrase]),
+                            <<>> %% Return empty body on error
+                    end;
+                {error, HttpReason} ->
+                    %% Handle errors in the HTTP request itself
+                    io:format("HTTP Request Error: ~p~n", [HttpReason]),
                     <<>> %% Return empty body on error
             end;
-        {error, Reason} ->
-            %% Handle errors in the HTTP request itself
-            io:format("HTTP Request Error: ~p~n", [Reason]),
-            <<>> %% Return empty body on error
+        {error, StartReason} -> 
+            io:format("Failed to start inets: ~p~n", [StartReason]),
+            exit(StartReason)
     end.
 
 % 페이지의 링크를 추출합니다.
